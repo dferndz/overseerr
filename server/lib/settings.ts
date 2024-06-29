@@ -64,6 +64,12 @@ export interface DVRSettings {
   tagRequests: boolean;
 }
 
+export interface MediaWizardSettings {
+  id: number;
+  name: string;
+  host: string;
+}
+
 export interface RadarrSettings extends DVRSettings {
   minimumAvailability: string;
 }
@@ -264,6 +270,7 @@ interface AllSettings {
   tautulli: TautulliSettings;
   radarr: RadarrSettings[];
   sonarr: SonarrSettings[];
+  mediawizard: MediaWizardSettings;
   public: PublicSettings;
   notifications: NotificationSettings;
   jobs: Record<JobId, JobSettings>;
@@ -311,6 +318,11 @@ class Settings {
       tautulli: {},
       radarr: [],
       sonarr: [],
+      mediawizard: {
+        id: 0,
+        name: '',
+        host: '',
+      },
       public: {
         initialized: false,
       },
@@ -468,6 +480,14 @@ class Settings {
 
   set radarr(data: RadarrSettings[]) {
     this.data.radarr = data;
+  }
+
+  get mediawizard(): MediaWizardSettings {
+    return this.data.mediawizard;
+  }
+
+  set mediawizard(data: MediaWizardSettings) {
+    this.data.mediawizard = data;
   }
 
   get sonarr(): SonarrSettings[] {

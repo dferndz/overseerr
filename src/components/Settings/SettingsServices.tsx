@@ -6,12 +6,17 @@ import Button from '@app/components/Common/Button';
 import LoadingSpinner from '@app/components/Common/LoadingSpinner';
 import Modal from '@app/components/Common/Modal';
 import PageTitle from '@app/components/Common/PageTitle';
+import MediaWizardForm from '@app/components/Settings/MediaWizardForm';
 import RadarrModal from '@app/components/Settings/RadarrModal';
 import SonarrModal from '@app/components/Settings/SonarrModal';
 import globalMessages from '@app/i18n/globalMessages';
 import { Transition } from '@headlessui/react';
 import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/solid';
-import type { RadarrSettings, SonarrSettings } from '@server/lib/settings';
+import {
+  type MediaWizardSettings,
+  type RadarrSettings,
+  type SonarrSettings,
+} from '@server/lib/settings';
 import axios from 'axios';
 import { Fragment, useState } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
@@ -21,6 +26,9 @@ const messages = defineMessages({
   services: 'Services',
   radarrsettings: 'Radarr Settings',
   sonarrsettings: 'Sonarr Settings',
+  mediawizardSettings: 'Media Wizard Settings',
+  mediawizardSettingsDescription:
+    'Update you Media Wizard server settings below. You can connect to a single Media Wizard instance.',
   serviceSettingsDescription:
     'Configure your {serverType} server(s) below. You can connect multiple {serverType} servers, but only two of them can be marked as defaults (one non-4K and one 4K). Administrators are able to override the server used to process new requests prior to approval.',
   deleteserverconfirm: 'Are you sure you want to delete this server?',
@@ -170,6 +178,8 @@ const SettingsServices = () => {
     error: sonarrError,
     mutate: revalidateSonarr,
   } = useSWR<SonarrSettings[]>('/api/v1/settings/sonarr');
+  const { data: mediawizardData, mutate: revalidateMediaWizard } =
+    useSWR<MediaWizardSettings>('/api/v1/settings/mediawizard');
   const [editRadarrModal, setEditRadarrModal] = useState<{
     open: boolean;
     radarr: RadarrSettings | null;
@@ -211,6 +221,21 @@ const SettingsServices = () => {
           intl.formatMessage(messages.services),
           intl.formatMessage(globalMessages.settings),
         ]}
+      />
+      <div className="mb-6">
+        <h3 className="heading">
+          {intl.formatMessage(messages.mediawizardSettings)}
+        </h3>
+        <p className="description">
+          {intl.formatMessage(messages.mediawizardSettingsDescription)}
+        </p>
+      </div>
+      <MediaWizardForm
+        mediawizard={mediawizardData ? mediawizardData : null}
+        onSave={() => {
+          revalidateMediaWizard();
+          mutate('/api/v1/settings/public');
+        }}
       />
       <div className="mb-6">
         <h3 className="heading">

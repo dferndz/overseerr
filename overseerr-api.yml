@@ -324,6 +324,19 @@ components:
         externalUrl:
           type: string
           nullable: true
+    MediaWizardSettings:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+          readOnly: true
+        name:
+          type: string
+          example: Media Wizard
+        host:
+          type: string
+          example: http://localhost:8080
     RadarrSettings:
       type: object
       properties:
@@ -2142,6 +2155,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TautulliSettings'
+  /settings/mediawizard:
+    get:
+      summary: Get MediaWizard settings
+      description: Returns MediaWizard server settings
+      tags:
+        - settings
+      responses:
+        '200':
+          description: 'Values were returned'
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/MediaWizardSettings'
+    put:
+      summary: Update MediaWizard settings
+      description: Update MediaWizard settings and return new settings
+      tags:
+        - settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MediaWizardSettings'
+      responses:
+        '200':
+          description: 'MediaWizard settings updated successfully'
+          content:
+            applicaiton/json:
+              schema:
+                $ref: '#/components/schemas/MediaWizardSettings'
   /settings/radarr:
     get:
       summary: Get Radarr settings
@@ -2154,9 +2200,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RadarrSettings'
+                $ref: '#/components/schemas/RadarrSettings'
     post:
       summary: Create Radarr instance
       description: Creates a new Radarr instance from the request body.
