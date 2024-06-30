@@ -10,3 +10,6 @@ services:
       - .:/app:rw,cached
       - /app/node_modules
       - /app/.next
+    network_mode: bridge
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

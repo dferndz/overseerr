@@ -1,3 +1,4 @@
+import MediaWizard from '@server/api/mediawizard';
 import type { RadarrMovieOptions } from '@server/api/servarr/radarr';
 import RadarrAPI from '@server/api/servarr/radarr';
 import type {
@@ -467,7 +468,11 @@ export class MediaRequest {
   @AfterUpdate()
   @AfterInsert()
   public async sendMedia(): Promise<void> {
-    await Promise.all([this.sendToRadarr(), this.sendToSonarr()]);
+    await Promise.all([
+      this.sendToRadarr(),
+      this.sendToSonarr(),
+      this.sendToMediaWizard(),
+    ]);
   }
 
   @AfterInsert()
@@ -869,6 +874,57 @@ export class MediaRequest {
         });
       } catch (e) {
         logger.error('Something went wrong sending request to Radarr', {
+          label: 'Media Request',
+          errorMessage: e.message,
+          requestId: this.id,
+          mediaId: this.media.id,
+        });
+        throw new Error(e.message);
+      }
+    }
+  }
+
+  public async sendToMediaWizard(): Promise<void> {
+    if (this.status === MediaRequestStatus.APPROVED) {
+      try {
+        const mediaRepository = getRepository(Media);
+        const media = await mediaRepository.findOne({
+          where: { id: this.media.id },
+          relations: { requests: true },
+        });
+
+        if (!media) {
+          throw new Error('Media data not found');
+        }
+
+        if (
+          media[this.is4k ? 'status4k' : 'status'] === MediaStatus.AVAILABLE
+        ) {
+          logger.warn('Media already exists, marking request as APPROVED', {
+            label: 'Media Request',
+            requestId: this.id,
+            mediaId: this.media.id,
+          });
+
+          const requestRepository = getRepository(MediaRequest);
+          this.status = MediaRequestStatus.APPROVED;
+          await requestRepository.save(this);
+          return;
+        }
+
+        const mediawizard = new MediaWizard();
+        const seasons =
+          this.type === MediaType.TV
+            ? this.seasons.map((season) => season.seasonNumber)
+            : null;
+
+        mediawizard.sendMediaRequest({
+          request_type: this.type,
+          tmdb_id: media.tmdbId.toString(),
+          seasons: seasons,
+        });
+      } catch (e) {
+        logger.error('Something went wrong sending request to Media Wizard', {
           label: 'Media Request',
           errorMessage: e.message,
           requestId: this.id,
